@@ -1,25 +1,62 @@
-"""Cluster registry and fill parsing (IIITD OMNI / Precision, verified 2026-06-15)."""
+"""Cluster registry and fill parsing (IIITD OMNI / Precision style)."""
 
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fleet.schema import ClusterSpec, QueueSpec
 
-# Site secrets live in env (never commit hosts/accounts):
-#   FLEET_USER, FLEET_ACCOUNT, FLEET_OMNI_HOST, FLEET_PRECISION_HOST
-_DEFAULT_USER = os.environ.get("FLEET_USER") or os.environ.get("USER") or "user"
-_ACCOUNT = os.environ.get("FLEET_ACCOUNT") or "lab"
+# ---------------------------------------------------------------------------
+# Local secrets: copy .env.example → .env (gitignored) and edit.
+# Real hosts/accounts never belong in the public tree.
+# ---------------------------------------------------------------------------
+
+# Published placeholders only (not real campus hosts).
+_DUMMY_OMNI_HOST = "10.0.0.1"
+_DUMMY_PRECISION_HOST = "10.0.0.2"
+_DUMMY_ACCOUNT = "lab"
+
+
+def _load_dotenv() -> None:
+    """Load KEY=VAL from .env into os.environ (does not override existing)."""
+    candidates = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parents[1] / ".env",
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip("'").strip('"')
+            if key and key not in os.environ:
+                os.environ[key] = val
+        break  # first found .env wins
+
+
+_load_dotenv()
 
 
 def _env(name: str, default: str = "") -> str:
     return (os.environ.get(name) or default).strip()
 
 
+_DEFAULT_USER = _env("FLEET_USER") or _env("USER") or "user"
+_ACCOUNT = _env("FLEET_ACCOUNT", _DUMMY_ACCOUNT)
+
 OMNI = ClusterSpec(
     name="omni",
     account=_ACCOUNT,
-    login_host=_env("FLEET_OMNI_HOST"),  # set locally; not published
+    login_host=_env("FLEET_OMNI_HOST", _DUMMY_OMNI_HOST),
     user=_DEFAULT_USER,
     env_prefix=(
         "export SLURM_CONF=/cm/shared/apps/slurm/var/etc/slurm/slurm.conf; "
@@ -45,7 +82,7 @@ OMNI = ClusterSpec(
 PRECISION = ClusterSpec(
     name="precision",
     account=_ACCOUNT,
-    login_host=_env("FLEET_PRECISION_HOST"),  # set locally; not published
+    login_host=_env("FLEET_PRECISION_HOST", _DUMMY_PRECISION_HOST),
     user=_DEFAULT_USER,
     notes="Precision: short=MIG 3g.40gb; medium=H100/A100; long=H200; CUDA 12.4.",
     queues={

@@ -69,14 +69,16 @@ fleet stop  -c omni
 | Precision | `-c precision` | IIITD Precision queues (see `config.py`) |
 | Laptop test | `-c mock` | local multi-process, free |
 
-Tokens are charged when jobs start (even if idle). **Do not commit** login hosts or lab accounts. Set them in your shell (or a private env file you never push):
+Tokens are charged when jobs start (even if idle).
+
+**Site secrets (hosts / account):** defaults in code are **dummy** (`10.0.0.1` / `10.0.0.2`, account `lab`). Put real values in a local **`.env`** (gitignored):
 
 ```bash
-export FLEET_ACCOUNT=...           # SLURM account
-export FLEET_OMNI_HOST=...         # OMNI login host
-export FLEET_PRECISION_HOST=...    # Precision login host
-# optional: export FLEET_USER=...
+cp .env.example .env
+# edit .env — FLEET_ACCOUNT, FLEET_OMNI_HOST, FLEET_PRECISION_HOST, …
 ```
+
+Fleet loads `.env` automatically from the repo root (or cwd). You can also `export` the same variables in your shell.
 
 ## Which GPUs (`-f` / `--fill`)
 
