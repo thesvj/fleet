@@ -1,0 +1,41 @@
+[project]
+name = "fleet"
+version = "0.4.2"
+description = "Multi-queue GPU pool and multi-job distributed training for IIITD SLURM"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Saij Varun" }]
+dependencies = []
+
+[project.optional-dependencies]
+torch = ["torch"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+fleet = "fleet.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fleet*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "torch: tests that require PyTorch",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["fleet", "tests", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]  # line length handled by formatter preference
+
+[tool.ruff.format]
+quote-style = "double"
